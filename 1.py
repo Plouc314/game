@@ -1,22 +1,39 @@
+#https://www.bing.com/images/search?view=detailV2&id=68E97E71AE1C348459DEDCAC5BAA3CDEC129BBA0&thid=OIP.2vS9fzpm5QsnndvuZMrD6AHaHa&mediaurl=https%3A%2F%2Fcdn2.iconfinder.com%2Fdata%2Ficons%2Fchess-set-pieces%2F100%2FChess_Set_03-White-Classic-Bishop-512.png&exph=512&expw=512&q=pawn+transparent+png&selectedindex=17&ajaxhist=0&vt=2&eim=1,6&ccid=2vS9fzpm&simid=607992906580164786&sim=1&pivotparams=insightsToken%3Dccid_jH4jq%252F7i*mid_3ED06223DABDCF0BCD56641A86A64ED1A1893DBC*simid_608019982040106134*thid_OIP.jH4jq!_7iJIGz0PEuvwL8MwHaHa&iss=VSI
 import pygame
 
 pygame.init()
 
-screen = pygame.display.set_mode((880,660))
+screen = pygame.display.set_mode((770,770))
 class Case(pygame.sprite.Sprite):
     def __init__(self,color):
         super(Case, self).__init__()
-        self.surf = pygame.Surface((80, 60))
+        self.surf = pygame.Surface((70, 70))
         self.surf.fill(color)
         self.rect = self.surf.get_rect()
 running = True
 enter_on = False
 
+#color
 color1 = (173,216,230)
 color2 = (153,196,210)
 curser_color = (113,156,170)
 select_color = (93,136,150)
 
+#pawns
+white_pawn = []
+black_pawn = []
+for i in range(12):
+    pawn = pygame.image.load('image_pawn4.png')
+    pawn = pygame.transform.scale(pawn, (70, 70))
+    white_pawn.append(pawn)
+for i in range(24):
+    pawn = pygame.image.load('image_pawn2.png')
+    pawn = pygame.transform.scale(pawn, (70, 70))
+    black_pawn.append(pawn)
+white_pawn_placement = [[5,3],[4,4],[5,4],[6,4],[3,5],[4,5],[6,5],[7,5],[4,6],[5,6],[6,6],[5,7]]
+black_pawn_placement = [[3,0],[4,0],[5,0],[6,0],[7,0],[5,1],[0,3],[0,4],[0,5],[0,6],[0,7],[1,5],[3,10],[4,10],[5,10],[6,10],[7,10],[5,9],[10,3],[10,4],[10,5],[10,6],[10,7],[9,5]]
+
+#board
 board = []
 place_select_case = [-1,0,select_color]
 place_curser_case = [0,0,curser_color]
@@ -55,15 +72,15 @@ def display_background(color1,color2,curser_color,select_color):
                     case = board[line][column]
                     case.surf.fill(color2)
                     screen.blit(case.surf, (x, y))
-            x += 80
+            x += 70
             test = not test
-        y += 60
+        y += 70
 
 def curser_case(curser_place_x,curser_place_y,curser_color):
     global board
     global place_curser_case
     board[place_curser_case[1]][place_curser_case[0]].surf.fill(place_curser_case[2])
-    screen.blit(board[place_curser_case[1]][place_curser_case[0]].surf, (80 * place_curser_case[0],60 * place_curser_case[1]))
+    screen.blit(board[place_curser_case[1]][place_curser_case[0]].surf, (70 * place_curser_case[0],70 * place_curser_case[1]))
     final_place_x = curser_place_x
     final_place_y = curser_place_y
     if curser_place_x > 10:
@@ -76,29 +93,30 @@ def curser_case(curser_place_x,curser_place_y,curser_color):
         final_place_y = 0
     normal_color = board[final_place_y][final_place_x].surf.get_at((0,0))
     board[final_place_y][final_place_x].surf.fill(curser_color)
-    screen.blit(board[final_place_y][final_place_x].surf, (80 * final_place_x,60 * final_place_y))
+    screen.blit(board[final_place_y][final_place_x].surf, (70 * final_place_x,70 * final_place_y))
     place_curser_case = [final_place_x,final_place_y,normal_color]
 
 def select_case(curser_place_x,curser_place_y,select_color):
     global enter_on
     global board
     global place_select_case
-    print("selected")
     if enter_on:
-        print("True")
         board[place_select_case[1]][place_select_case[0]].surf.fill(place_select_case[2])
-        screen.blit(board[place_select_case[1]][place_select_case[0]].surf, (80 * place_select_case[0],60 * place_select_case[1]))
+        screen.blit(board[place_select_case[1]][place_select_case[0]].surf, (70 * place_select_case[0],70 * place_select_case[1]))
         place_select_case = [-1,0,color1]
     else:
-        print("False")
         normal_color = board[curser_place_y][curser_place_x].surf.get_at((0,0))
-        print(normal_color)
         board[curser_place_y][curser_place_x].surf.fill(select_color)
-        screen.blit(board[curser_place_y][curser_place_x].surf, (80 * curser_place_x, 60 * curser_place_y))
+        screen.blit(board[curser_place_y][curser_place_x].surf, (70 * curser_place_x, 70 * curser_place_y))
         place_select_case = [curser_place_x,curser_place_y,normal_color] 
-        print(place_select_case) 
     enter_on = not enter_on
         
+def display_pawns(white_pawn_placement,white_pawn,black_pawn_placement,black_pawn):
+    for i in range(len(white_pawn)):
+        screen.blit(white_pawn[i],(70 * white_pawn_placement[i][0],70 * white_pawn_placement[i][1]))        
+    for i in range(len(black_pawn)):
+        screen.blit(black_pawn[i],(70 * black_pawn_placement[i][0],70 * black_pawn_placement[i][1]))    
+
 
 def move_curser():
     global curser_place_x
@@ -132,7 +150,8 @@ while running:
     if move_curser():
         curser_case(curser_place_x,curser_place_y,select_color)
     pressed = pygame.key.get_pressed()
-    if pressed[pygame.K_BACKSPACE]:
+    if pressed[pygame.K_SPACE]:
         select_case(curser_place_x,curser_place_y,select_color)
+    display_pawns(white_pawn_placement,white_pawn,black_pawn_placement,black_pawn)
     clock.tick(10)
     pygame.display.flip()

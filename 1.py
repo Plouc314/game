@@ -32,6 +32,7 @@ for i in range(24):
     black_pawn.append(pawn)
 white_pawn_placement = [[5,3],[4,4],[5,4],[6,4],[3,5],[4,5],[6,5],[7,5],[4,6],[5,6],[6,6],[5,7]]
 black_pawn_placement = [[3,0],[4,0],[5,0],[6,0],[7,0],[5,1],[0,3],[0,4],[0,5],[0,6],[0,7],[1,5],[3,10],[4,10],[5,10],[6,10],[7,10],[5,9],[10,3],[10,4],[10,5],[10,6],[10,7],[9,5]]
+pawn_selected = [0,0]
 
 #board
 board = []
@@ -96,26 +97,93 @@ def curser_case(curser_place_x,curser_place_y,curser_color):
     screen.blit(board[final_place_y][final_place_x].surf, (70 * final_place_x,70 * final_place_y))
     place_curser_case = [final_place_x,final_place_y,normal_color]
 
-def select_case(curser_place_x,curser_place_y,select_color):
+def select_case(curser_place_x,curser_place_y,select_color,white_pawn_placement,black_pawn_placement):
     global enter_on
     global board
     global place_select_case
+    global pawn_selected
     if enter_on:
-        board[place_select_case[1]][place_select_case[0]].surf.fill(place_select_case[2])
-        screen.blit(board[place_select_case[1]][place_select_case[0]].surf, (70 * place_select_case[0],70 * place_select_case[1]))
-        place_select_case = [-1,0,color1]
+        print("enter off")
+        if control_deplacement(curser_place_x,curser_place_y):
+            board[place_select_case[1]][place_select_case[0]].surf.fill(place_select_case[2])
+            screen.blit(board[place_select_case[1]][place_select_case[0]].surf, (70 * place_select_case[0],70 * place_select_case[1]))
+            place_select_case = [-1,0,color1]
+            print("change")
+            enter_on = not enter_on
     else:
-        normal_color = board[curser_place_y][curser_place_x].surf.get_at((0,0))
-        board[curser_place_y][curser_place_x].surf.fill(select_color)
-        screen.blit(board[curser_place_y][curser_place_x].surf, (70 * curser_place_x, 70 * curser_place_y))
-        place_select_case = [curser_place_x,curser_place_y,normal_color] 
-    enter_on = not enter_on
+        test = 0
+        print("enter on")
+        for i in range(len(white_pawn_placement)):
+            if white_pawn_placement[i][0] == curser_place_x and white_pawn_placement[i][1] == curser_place_y: 
+                pawn_selected = [0,i]
+                test = 1
+        for i in range(len(black_pawn_placement)):
+            if black_pawn_placement[i][0] == curser_place_x and black_pawn_placement[i][1] == curser_place_y: 
+                pawn_selected = [1,i]
+                test = 1
+        if test == 1:
+            normal_color = board[curser_place_y][curser_place_x].surf.get_at((0,0))
+            board[curser_place_y][curser_place_x].surf.fill(select_color)
+            screen.blit(board[curser_place_y][curser_place_x].surf, (70 * curser_place_x, 70 * curser_place_y))
+            place_select_case = [curser_place_x,curser_place_y,normal_color] 
+            enter_on = not enter_on
         
 def display_pawns(white_pawn_placement,white_pawn,black_pawn_placement,black_pawn):
     for i in range(len(white_pawn)):
         screen.blit(white_pawn[i],(70 * white_pawn_placement[i][0],70 * white_pawn_placement[i][1]))        
     for i in range(len(black_pawn)):
         screen.blit(black_pawn[i],(70 * black_pawn_placement[i][0],70 * black_pawn_placement[i][1]))    
+
+def control_deplacement(curser_place_x,curser_place_y):
+    global pawn_selected
+    global black_pawn_placement
+    global white_pawn_placement
+    if pawn_selected[0] == 0:
+        if white_pawn_placement[pawn_selected[1]][0] == curser_place_x and white_pawn_placement[pawn_selected[1]][1] == curser_place_y:
+            return False
+        if white_pawn_placement[pawn_selected[1]][0] == curser_place_x or white_pawn_placement[pawn_selected[1]][1] == curser_place_y:
+            white_pawn_placement[pawn_selected[1]] = [curser_place_x,curser_place_y]
+            return True
+    if pawn_selected[0] == 1:
+        if black_pawn_placement[pawn_selected[1]][0] == curser_place_x and black_pawn_placement[pawn_selected[1]][1] == curser_place_y:
+            return False
+        if black_pawn_placement[pawn_selected[1]][0] == curser_place_x or black_pawn_placement[pawn_selected[1]][1] == curser_place_y:
+            black_pawn_placement[pawn_selected[1]] = [curser_place_x,curser_place_y]
+            return True
+    return False
+
+def control_pawn_capture():
+    global white_pawn_placement
+    global black_pawn_placement
+    global white_pawn
+    global black_pawn
+    white_pawn_to_delete = control_white_pawn_capture(white_pawn,black_pawn,white_pawn_placement,black_pawn_placement)
+##########
+def control_white_pawn_capture(white_pawn,black_pawn,white_pawn_placement,black_pawn_placement):
+    returned = []
+    for i in range(len(white_pawn_placement)):
+        co_of_white_pawn = [white_pawn_placement[i][0],white_pawn_placement[i][1]]
+        test = 0
+        test_vertical = [False,False]
+        test_horizontal = [False,False]
+        for e in range(len(black_pawn_placement)):
+            co_of_black_pawn = [black_pawn_placement[i][0],black_pawn_placement[i][1]]
+            #test vertical dessus
+            if co_of_white_pawn[0] == co_of_black_pawn[0] and co_of_white_pawn[1] == co_of_black_pawn[1] + 1:
+                test_vertical[0] = True
+            #test vertical dessous
+            if co_of_white_pawn[0] == co_of_black_pawn[0] and co_of_white_pawn[1] == co_of_black_pawn[1] - 1:
+                test_vertical[1] = True
+            #test horizontal droite
+            if co_of_white_pawn[1] == co_of_black_pawn[1] and co_of_white_pawn[1] == co_of_black_pawn[1] + 1:
+                test_horizontal[0] = True
+            #test horizontal gauche
+            if co_of_white_pawn[1] == co_of_black_pawn[1] and co_of_white_pawn[1] == co_of_black_pawn[1] - 1:
+                test_horizontal[1] = True
+        if test_vertical == [True,True] or test_horizontal == [True,True]:
+            returned.append(i)
+    return returned
+
 
 
 def move_curser():
@@ -151,7 +219,7 @@ while running:
         curser_case(curser_place_x,curser_place_y,select_color)
     pressed = pygame.key.get_pressed()
     if pressed[pygame.K_SPACE]:
-        select_case(curser_place_x,curser_place_y,select_color)
+        select_case(curser_place_x,curser_place_y,select_color,white_pawn_placement,black_pawn_placement)
     display_pawns(white_pawn_placement,white_pawn,black_pawn_placement,black_pawn)
     clock.tick(10)
     pygame.display.flip()

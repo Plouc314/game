@@ -1,25 +1,35 @@
 #https://www.bing.com/images/search?view=detailV2&id=68E97E71AE1C348459DEDCAC5BAA3CDEC129BBA0&thid=OIP.2vS9fzpm5QsnndvuZMrD6AHaHa&mediaurl=https%3A%2F%2Fcdn2.iconfinder.com%2Fdata%2Ficons%2Fchess-set-pieces%2F100%2FChess_Set_03-White-Classic-Bishop-512.png&exph=512&expw=512&q=pawn+transparent+png&selectedindex=17&ajaxhist=0&vt=2&eim=1,6&ccid=2vS9fzpm&simid=607992906580164786&sim=1&pivotparams=insightsToken%3Dccid_jH4jq%252F7i*mid_3ED06223DABDCF0BCD56641A86A64ED1A1893DBC*simid_608019982040106134*thid_OIP.jH4jq!_7iJIGz0PEuvwL8MwHaHa&iss=VSI
 import pygame
+import subprocess
 
 pygame.init()
 
-screen = pygame.display.set_mode((704,704))
+screen = pygame.display.set_mode((904,704))
 class Case(pygame.sprite.Sprite):
     def __init__(self,color):
         super(Case, self).__init__()
         self.surf = pygame.Surface((64, 64))
         self.surf.fill(color)
         self.rect = self.surf.get_rect()
+
+class Right_part(pygame.sprite.Sprite):
+    def __init__(self,color):
+        super(Right_part, self).__init__()
+        self.surf = pygame.Surface((200, 704))
+        self.surf.fill(color)
+        self.rect = self.surf.get_rect()
+
+
 running = True
 enter_on = False
 tour = True
 finish = False
 winner = ''
+launch = False
 
-#text
-font = pygame.font.SysFont("comicsansms", 30)
-
-
+#text 
+font = pygame.font.SysFont("Calibri", 20)
+finish_font = pygame.font.SysFont("Calibri",25)
 
 #color
 color1 = (173,216,230)
@@ -47,7 +57,7 @@ pawn_selected = [0,0]
 king_selected = None
 close_white_pawn = []
 
-#board
+#board and right part
 board = []
 place_select_case = [-1,0,select_color]
 place_curser_case = [0,0,curser_color]
@@ -56,6 +66,8 @@ for line in range(11):
     for column in range(11):
         case = Case(color1)
         board[line].append(case)
+right_part = Right_part((255,255,255))
+
 
 curser_place_x = 0
 curser_place_y = 0
@@ -94,6 +106,25 @@ def display_background(color1,color2,color3,curser_color,select_color):
             x += 64
             test = not test
         y += 64
+
+def display_text(tour,white_pawn,black_pawn,winner,finish):
+    global font
+    global finish_font
+    screen.blit(right_part.surf, (704, 0))
+    if tour:
+        text_tour = font.render('Turn: White',True,(0,0,0))
+    else:
+        text_tour = font.render('Turn: Black',True,(0,0,0))
+    screen.blit(text_tour,(730, 30))
+    text_loose_pawn = font.render('White losses: ' + str(12 - len(white_pawn)),True,(0,0,0))
+    screen.blit(text_loose_pawn,(730, 60))
+    text_loose_pawn = font.render('black losses: ' + str(24 - len(black_pawn)),True,(0,0,0))
+    screen.blit(text_loose_pawn,(730, 90))
+    if finish:
+        text_winner = finish_font.render(str(winner) + " won",True,(0,0,0))
+        screen.blit(text_winner,(750, 250))
+        text_new_game = font.render('Press escape to restart.',True,(0,0,0))
+        screen.blit(text_new_game,(715, 280))
 
 def test_special_case(line,column):
     if line == 0 and (column == 0 or column == 10):
@@ -134,12 +165,10 @@ def select_case(curser_place_x,curser_place_y,select_color,white_pawn_placement,
     global king_selected
     global king
     if enter_on:
-        print("enter off")
         if king_selected != None:
             if control_king_deplacement(curser_place_x,curser_place_y,king_selected):
                 king[1] = curser_place_x
                 king[2] = curser_place_y
-                print(str(king[1]) + " " + str(king[2]) + " king")
                 board[place_select_case[1]][place_select_case[0]].surf.fill(place_select_case[2])
                 screen.blit(board[place_select_case[1]][place_select_case[0]].surf, (64 * place_select_case[0],64 * place_select_case[1]))
                 place_select_case = [-1,0,color1]
@@ -154,7 +183,6 @@ def select_case(curser_place_x,curser_place_y,select_color,white_pawn_placement,
             tour = not tour
     else:
         test = 0
-        print("enter on")
         if tour:
             for i in range(len(white_pawn_placement)):
                 if white_pawn_placement[i][0] == curser_place_x and white_pawn_placement[i][1] == curser_place_y: 
@@ -186,22 +214,18 @@ def control_deplacement(curser_place_x,curser_place_y,king):
     global pawn_selected
     global black_pawn_placement
     global white_pawn_placement
-    print(str(pawn_selected) + " pawn_selected")
     if king[1] == curser_place_x and king[2] == curser_place_y:
         return False
     if pawn_selected[0] == 0:
         if white_pawn_placement[pawn_selected[1]][0] == curser_place_x:
-            print(str( white_pawn_placement[pawn_selected[1]]) + " co-pawn_selected")
             if white_pawn_placement[pawn_selected[1]][1] == curser_place_y:
                 return False
             if not control_obstacle('vertical',pawn_selected,white_pawn_placement,black_pawn_placement):
-                print("vertical block")
                 return False
         if white_pawn_placement[pawn_selected[1]][1] == curser_place_y:
             if white_pawn_placement[pawn_selected[1]][0] == curser_place_x:
                 return False
             if not control_obstacle('horizontal',pawn_selected,white_pawn_placement,black_pawn_placement):
-                print("horizontal block")
                 return False
         if white_pawn_placement[pawn_selected[1]][0] == curser_place_x or white_pawn_placement[pawn_selected[1]][1] == curser_place_y:
             white_pawn_placement[pawn_selected[1]] = [curser_place_x,curser_place_y]
@@ -211,13 +235,11 @@ def control_deplacement(curser_place_x,curser_place_y,king):
             if black_pawn_placement[pawn_selected[1]][1] == curser_place_y:
                 return False
             if not control_obstacle('vertical',pawn_selected,white_pawn_placement,black_pawn_placement):
-                print("vertical block")
                 return False
         if black_pawn_placement[pawn_selected[1]][1] == curser_place_y:
             if black_pawn_placement[pawn_selected[1]][0] == curser_place_x:
                 return False
             if not control_obstacle('horizontal',pawn_selected,white_pawn_placement,black_pawn_placement):
-                print("horizontal block")
                 return False
         if black_pawn_placement[pawn_selected[1]][1] == curser_place_y or black_pawn_placement[pawn_selected[1]][0] == curser_place_x:
             black_pawn_placement[pawn_selected[1]] = [curser_place_x,curser_place_y]
@@ -252,7 +274,6 @@ def control_king_capture(white_pawn_placement,black_pawn_placement,king):
         return True
     if control_king_case(king,white_pawn_placement,black_pawn_placement):
         if control_chain_white_pawn(white_pawn_placement,black_pawn_placement,king):
-            print("LOST")
             winner = 'Black'
             finish = True
 
@@ -319,7 +340,6 @@ def control_obstacle(orientation,pawn_selected,white_pawn_placement,black_pawn_p
     if pawn_selected[0] == 0:
         if orientation == "vertical":
             if white_pawn_placement[pawn_selected[1]][1] - curser_place_y > 0:
-                print("BLOCK")
                 for i in range(len(white_pawn_placement)):
                     if i != pawn_selected[1]:
                         if white_pawn_placement[i][0] == white_pawn_placement[pawn_selected[1]][0] and white_pawn_placement[i][1] >= curser_place_y and white_pawn_placement[i][1] < white_pawn_placement[pawn_selected[1]][1]:
@@ -359,7 +379,6 @@ def control_obstacle(orientation,pawn_selected,white_pawn_placement,black_pawn_p
     else:
         if orientation == "vertical":
             if black_pawn_placement[pawn_selected[1]][1] - curser_place_y > 0:
-                print("BLOCK")
                 for i in range(len(white_pawn_placement)):
                     if i != pawn_selected[1]:
                         if white_pawn_placement[i][0] == black_pawn_placement[pawn_selected[1]][0] and white_pawn_placement[i][1] >= curser_place_y and white_pawn_placement[i][1] < black_pawn_placement[pawn_selected[1]][1]:
@@ -515,14 +534,14 @@ while running:
         if event.type == pygame.QUIT:
                 running = False
     display_background(color1,color2,color3,curser_color,select_color)
+    display_text(tour,white_pawn,black_pawn,winner,finish)
+    pressed = pygame.key.get_pressed()
     if not finish:
         if move_curser():
             curser_case(curser_place_x,curser_place_y,select_color)
-        pressed = pygame.key.get_pressed()
         if pressed[pygame.K_SPACE]:
             select_case(curser_place_x,curser_place_y,select_color,white_pawn_placement,black_pawn_placement)
         if pressed[pygame.K_BACKSPACE]:
-            print("delete")
             enter_on = False
             place_select_case = [-1,0,color1]
         control_pawn_capture()
@@ -530,10 +549,11 @@ while running:
     if not finish:
         control_king_capture(white_pawn_placement,black_pawn_placement,king)
     else:
-        text = font.render(str(winner) + " win", True, (0, 0, 0))
-        screen_finish = pygame.display.set_mode((400,280))
-        screen_finish.fill((255,255,255))
-        screen_finish.blit(text,(200 - text.get_width() // 2, 140 - text.get_height() // 2))
+        if pressed[pygame.K_ESCAPE]:
+            launch = True
+    if finish and launch:
+        subprocess.call(["python","1.py"],shell=True)
+        exit()
     if control_white_win(king):
         finish = True
         winner = 'White'

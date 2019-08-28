@@ -5,13 +5,14 @@ pygame.init()
 
 screen = pygame.display.set_mode((840,640))
 class Case(pygame.sprite.Sprite):
-    def __init__(self,color,co=[0,0]):
+    def __init__(self,color,co=[-1,-1],index=[0,0]):
         super(Case, self).__init__()
         self.surf = pygame.Surface((64, 64))
         self.color = color
         self.surf.fill(self.color)
         self.rect = self.surf.get_rect()
         self.co = co
+        self.index = index
 
 class Right_part(pygame.sprite.Sprite):
     def __init__(self,color):
@@ -22,7 +23,7 @@ class Right_part(pygame.sprite.Sprite):
         self.rect = self.surf.get_rect()
 
 class Pawn():
-    def __init__(self,color,co_x,co_y):
+    def __init__(self,color,co_x,co_y,index):
         self.color = color
         if self.color == 'white':
             self.image = pygame.image.load('1_image\image_white_pawn.png')
@@ -31,6 +32,7 @@ class Pawn():
         self.image = pygame.transform.scale(self.image, (64, 64))
         self.co_x = co_x
         self.co_y = co_y
+        self.index = index
 
 #color
 color1 = (173,216,230)
@@ -56,11 +58,14 @@ for line in range(10):
 #variable
 running = True
 tour = True
+selection = False
+
 
 #pawn
 pawns = [[],[]]
 test = True
 for a in range(2):
+    index = 0
     if a == 0:
         x = 1
         y = 1
@@ -76,12 +81,13 @@ for a in range(2):
             y = 7
         for i in range(5):
             if test:
-                new_pawn = Pawn('white',x,y)
+                new_pawn = Pawn('white',x,y,index)
                 pawns[0].append(new_pawn)
             else:
-                new_pawn = Pawn('black',x,y)
+                new_pawn = Pawn('black',x,y,index)
                 pawns[1].append(new_pawn)
             x += 2
+            index += 1
     test = not test
 
 
@@ -103,9 +109,9 @@ def display_pawns(pawns):
     for i in range(len(pawns[0])):
         screen.blit(pawns[0][i].image ,(64 * pawns[0][i].co_x ,64 * pawns[0][i].co_y))
     for i in range(len(pawns[1])):
-        screen.blit(pawns[1][i].image ,(64 * pawns[0][i].co_x ,64 * pawns[1][i].co_y))
+        screen.blit(pawns[1][i].image ,(64 * pawns[1][i].co_x ,64 * pawns[1][i].co_y))
 
-def select_case(mouse_pos):
+def mouse_case(mouse_pos):
     x = 0
     y = 0
     co_x = 0
@@ -117,10 +123,44 @@ def select_case(mouse_pos):
             co_x = i + 1
         if mouse_pos[1] >= y:
             co_y = i + 1
-    selected_case.co = [co_x,co_y]
+    return [co_x,co_y]
     
+def select_case(mouse_pos,pawns):
+    global selection
+    selection = True
+    coordonate = mouse_case(mouse_pos) 
+    selected_case.co = coordonate
+    for a in range(2):
+        for i in range(len(pawns[a])):
+            if pawns[a][i].co_x == coordonate[0] and pawns[a][i].co_y == coordonate[1]:
+                selected_case.index = [a,i]
+    
+def move_pawn(mouse_pos):
+    global selection
+    coordonate = mouse_case(mouse_pos) 
+    if control_deplacement(coordonate):
+        pawns[selected_case.index[0]][selected_case.index[1]].co_x = coordonate[0]
+        pawns[selected_case.index[0]][selected_case.index[1]].co_y = coordonate[1]
+        selected_case.co = [-1,-1]
+        selection = False
 
-
+def control_deplacement(coordonate):
+    test = False
+    if coordonate[0] == selected_case.co[0] and ( coordonate[1] == selected_case.co[1] + 1 or coordonate[1] == selected_case.co[1] - 1):
+        test = True
+    elif coordonate[1] == selected_case.co[1] and ( coordonate[0] == selected_case.co[0] + 1 or coordonate[0] == selected_case.co[0] - 1):
+        test = True
+    if test:
+        for i in range(len(pawns[0])):
+            if pawns[0][i].co_x == coordonate[0] and pawns[0][i].co_y == coordonate[1]:
+                test = False
+        for i in range(len(pawns[1])):
+            if pawns[1][i].co_x == coordonate[0] and pawns[1][i].co_y == coordonate[1]:
+                test = False
+    if test:
+        return True
+    else:
+        return False
 
 
 clock = pygame.time.Clock()
@@ -131,7 +171,10 @@ while running:
             running = False
         if event.type == pygame.MOUSEBUTTONUP:
             mouse_pos = pygame.mouse.get_pos()
-            select_case(mouse_pos)
+            if not selection:
+                select_case(mouse_pos,pawns)
+            else:
+                move_pawn(mouse_pos)
     display_background(board)
     display_pawns(pawns)
     clock.tick(60)

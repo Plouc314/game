@@ -47,6 +47,8 @@ class Pawn():
         self.co_x = co_x
         self.co_y = co_y
         self.index = index
+        self.state = ['normal']
+        self.moved = [False,0,0]
 
 class Tour():
     def __init__(self,tour=True,pawn_to_move=2,move_remaining=2,pawn_index=0):
@@ -170,7 +172,7 @@ def display_background(board):
     y = 0
     for line in range(10):
         x = 0
-        for column in range(10):
+        for column in range(10):   
             if line == selected_case.co[1] and column == selected_case.co[0]:
                 screen.blit(selected_case.surf, (x,y))
             else:
@@ -225,8 +227,13 @@ def select_case(mouse_pos,pawns):
 def move_pawn(mouse_pos):
     global selection
     global tour
+    for a in range(2):
+        for i in range(len(pawns[a])):
+            if pawns[a][i].moved[0]:
+                pawns[a][i].moved[0] = False
     coordonate = mouse_case(mouse_pos) 
     if control_deplacement(coordonate):
+        pawns[selected_case.index[0]][selected_case.index[1]].moved = [True,pawns[selected_case.index[0]][selected_case.index[1]].co_x,pawns[selected_case.index[0]][selected_case.index[1]].co_y]
         pawns[selected_case.index[0]][selected_case.index[1]].co_x = coordonate[0]
         pawns[selected_case.index[0]][selected_case.index[1]].co_y = coordonate[1]
         selected_case.co = [-1,-1]
@@ -256,17 +263,32 @@ def control_income_case(pawns,board):
     for a in range(2):
         for i in range(len(pawns[a])):
             test = 0
+            pawns_incoming = [i]
             for e in range(len(pawns[a])):
                 if pawns[a][i].co_x == pawns[a][e].co_x + 2 and pawns[a][i].co_y == pawns[a][e].co_y:
                     test += 1
+                    pawns_incoming.append(e)
                 elif pawns[a][i].co_y == pawns[a][e].co_y + 1 and pawns[a][i].co_x == pawns[a][e].co_x + 1:
                     test += 1
+                    pawns_incoming.append(e)
                 elif pawns[a][i].co_y == pawns[a][e].co_y - 1 and pawns[a][i].co_x == pawns[a][e].co_x + 1:
                     test += 1
+                    pawns_incoming.append(e)
             if test == 3:
-                board[pawns[a][i].co_y][pawns[a][i].co_x - 1].income = True
-                board[pawns[a][i].co_y][pawns[a][i].co_x - 1].income_color = a
-                board[pawns[a][i].co_y][pawns[a][i].co_x - 1].surf.fill((255,255,30))
+                co_center_case = [pawns[a][i].co_y,pawns[a][i].co_x - 1]
+                board[co_center_case[0]][co_center_case[1]].income = True
+                board[co_center_case[0]][co_center_case[1]].income_color = a
+                board[co_center_case[0]][co_center_case[1]].surf.fill((255,255,30))
+                #update Pawn.state 
+                for e in range(4):
+                    do = True
+                    for u in range(len(pawns[a][pawns_incoming[e]].state)):
+                        if pawns[a][pawns_incoming[e]].state[u] == [co_center_case[0],co_center_case[1]]:
+                            do = False
+                    if do:
+                        pawns[a][pawns_incoming[e]].state[0] = 'incoming'
+                        pawns[a][pawns_incoming[e]].state.append([co_center_case[0],co_center_case[1]]) 
+                        board[pawns[a][pawns_incoming[e]].co_y][pawns[a][pawns_incoming[e]].co_x].surf.fill((200,200,70))
     #control old income case
     for line in range(10):
         for column in range(10):
@@ -288,7 +310,28 @@ def control_income_case(pawns,board):
                 if not surrounded:
                     board[line][column].income = False
                     board[line][column].surf.fill(board[line][column].color)
-
+                    #change Pawn.state for the surrender pawns
+                    for a in range(2):
+                        for i in range(len(pawns[a])):
+                            if pawns[a][i].state[0] == 'incoming':
+                                e = 1
+                                test = False
+                                while not test:
+                                    if pawns[a][i].state[e] == [line,column]:
+                                        pawns[a][i].state.pop(e)
+                                        #control 'incoming'
+                                        if len(pawns[a][i].state) == 1:
+                                            if pawns[a][i].moved[0]:
+                                                board[pawns[a][i].moved[2]][pawns[a][i].moved[1]].surf.fill(board[pawns[a][i].moved[2]][pawns[a][i].moved[1]].color)
+                                            else:
+                                                board[pawns[a][i].co_y][pawns[a][i].co_x].surf.fill(board[pawns[a][i].co_y][pawns[a][i].co_x].color)
+                                            pawns[a][i].state[0] = 'normal'
+                                        test = True
+                                        e -= 1
+                                    e += 1
+                                    if e == len(pawns[a][i].state):
+                                        test = True
+                                    
 def calculate_income(number_player):
     earned_money = 0
     for line in range(10):

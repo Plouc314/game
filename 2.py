@@ -1,14 +1,25 @@
 import pygame
 import subprocess
+from math import trunc
 
 pygame.init()
 
-screen = pygame.display.set_mode((840,640))
+class Dimension():
+    def __init__(self,input_dim):
+        self.dimension = [input_dim,int(trunc(input_dim * 7/9))]
+        self.dim_case = [int(trunc(self.dimension[1] / 10)),int(trunc(self.dimension[1] / 10))]
+        self.dim_right_part = [int(trunc( 2 / 9 * self.dimension[0])),self.dimension[1]]
+        self.dim_normal_text = int(trunc(1 / 36 * self.dimension[0]))
+        self.dim_finish_text = int(trunc(17 / 180 * self.dimension[0]))
+        self.dim_marge = self.dim_normal_text
+
+dimension = Dimension(1800)
+screen = pygame.display.set_mode(dimension.dimension)
 
 class Case(pygame.sprite.Sprite):
     def __init__(self,color,co=[-1,-1],index=[0,0]):
         super(Case, self).__init__()
-        self.surf = pygame.Surface((64, 64))
+        self.surf = pygame.Surface(dimension.dim_case)
         self.color = color
         self.surf.fill(self.color)
         self.rect = self.surf.get_rect()
@@ -20,7 +31,7 @@ class Case(pygame.sprite.Sprite):
 class Right_part(pygame.sprite.Sprite):
     def __init__(self,color):
         super(Right_part, self).__init__()
-        self.surf = pygame.Surface((200, 704))
+        self.surf = pygame.Surface(dimension.dim_right_part)
         self.color = color
         self.surf.fill(self.color)
         self.rect = self.surf.get_rect()
@@ -29,10 +40,10 @@ class Pawn():
     def __init__(self,color,co_x,co_y,index):
         self.color = color
         if self.color == 'white':
-            self.image = pygame.image.load('1_image\image_white_pawn.png')
+            self.image = pygame.image.load('1_image/image_white_pawn.png')
         else:
-            self.image = pygame.image.load('1_image\image_black_pawn.png')
-        self.image = pygame.transform.scale(self.image, (64, 64))
+            self.image = pygame.image.load('1_image/image_black_pawn.png')
+        self.image = pygame.transform.scale(self.image, dimension.dim_case)
         self.co_x = co_x
         self.co_y = co_y
         self.index = index
@@ -53,6 +64,7 @@ class Tour():
                 player_1.money += calculate_income(0)
             else:
                 player_2.money += calculate_income(1)
+            subprocess.call(['python3','support_2/buy_point.py'])
             self.pawn_to_move = 2
             self.move_remaining = 2
             self.new_pawn_select = True
@@ -81,8 +93,10 @@ color2 = (153,196,210)
 select_color = (93,136,150)
 
 #text 
-font = pygame.font.SysFont("Calibri", 20)
-finish_font = pygame.font.SysFont("Calibri",25)
+print(str(dimension.dim_normal_text)+ " normal")
+print(str(dimension.dim_finish_text)+ " finish")
+font = pygame.font.SysFont("Calibri", dimension.dim_normal_text)
+finish_font = pygame.font.SysFont("Calibri",dimension.dim_finish_text)
 
 #board and right part
 right_part = Right_part((255,255,255))
@@ -161,15 +175,15 @@ def display_background(board):
                 screen.blit(selected_case.surf, (x,y))
             else:
                 screen.blit(board[line][column].surf, (x, y))
-            x += 64
-        y += 64
-    screen.blit(right_part.surf,(640,0))
+            x += dimension.dim_case[0]
+        y += dimension.dim_case[0]
+    screen.blit(right_part.surf,(dimension.dimension[0] - dimension.dim_right_part[0],0))
 
 def display_pawns(pawns):
     for i in range(len(pawns[0])):
-        screen.blit(pawns[0][i].image ,(64 * pawns[0][i].co_x ,64 * pawns[0][i].co_y))
+        screen.blit(pawns[0][i].image ,(dimension.dim_case[0] * pawns[0][i].co_x ,dimension.dim_case[0] * pawns[0][i].co_y))
     for i in range(len(pawns[1])):
-        screen.blit(pawns[1][i].image ,(64 * pawns[1][i].co_x ,64 * pawns[1][i].co_y))
+        screen.blit(pawns[1][i].image ,(dimension.dim_case[0] * pawns[1][i].co_x ,dimension.dim_case[0] * pawns[1][i].co_y))
 
 def mouse_case(mouse_pos):
     x = 0
@@ -177,8 +191,8 @@ def mouse_case(mouse_pos):
     co_x = 0
     co_y = 0
     for i in range(10):
-        x += 64
-        y += 64
+        x += dimension.dim_case[0]
+        y += dimension.dim_case[0]
         if mouse_pos[0] >= x:
             co_x = i + 1
         if mouse_pos[1] >= y:
@@ -288,11 +302,12 @@ def display_text():
         text_tour = font.render('Turn: White',True,(0,0,0))
     else:
         text_tour = font.render('Turn: White',True,(0,0,0))
-    screen.blit(text_tour,(650, 30))
+    dim_x = dimension.dimension[0] - dimension.dim_right_part[0] + dimension.dim_marge
+    screen.blit(text_tour,(dim_x, dimension.dim_marge))
     text_money = font.render('Player 1 money: ' + str(player_1.money),True,(0,0,0))
-    screen.blit(text_money,(650, 60))
+    screen.blit(text_money,(dim_x, 2 * dimension.dim_marge))
     text_money = font.render('Player 2 money: ' + str(player_2.money),True,(0,0,0))
-    screen.blit(text_money,(650, 90))
+    screen.blit(text_money,(dim_x, 3 * dimension.dim_marge))
 
 
 

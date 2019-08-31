@@ -4,18 +4,18 @@ import subprocess
 
 pygame.init()
 
-screen = pygame.display.set_mode((904,704))
+screen = pygame.display.set_mode((1940,1540))
 class Case(pygame.sprite.Sprite):
     def __init__(self,color):
         super(Case, self).__init__()
-        self.surf = pygame.Surface((64, 64))
+        self.surf = pygame.Surface((140, 140))
         self.surf.fill(color)
         self.rect = self.surf.get_rect()
 
 class Right_part(pygame.sprite.Sprite):
     def __init__(self,color):
         super(Right_part, self).__init__()
-        self.surf = pygame.Surface((200, 704))
+        self.surf = pygame.Surface((400, 1540))
         self.surf.fill(color)
         self.rect = self.surf.get_rect()
 
@@ -28,8 +28,8 @@ winner = ''
 launch = False
 
 #text 
-font = pygame.font.SysFont("Calibri", 20)
-finish_font = pygame.font.SysFont("Calibri",25)
+font = pygame.font.SysFont("Calibri", 50)
+finish_font = pygame.font.SysFont("Calibri",70)
 
 #color
 color1 = (173,216,230)
@@ -41,15 +41,15 @@ select_color = (93,136,150)
 #pawns and king
 white_pawn = []
 black_pawn = []
-king = [pygame.image.load('king5.png'),5,5]
-king[0] = pygame.transform.scale(king[0], (64, 64))
+king = [pygame.image.load('1_image/king.png'),5,5]
+king[0] = pygame.transform.scale(king[0], (140, 140))
 for i in range(12):
-    pawn = pygame.image.load('image_white_pawn1.png')
-    pawn = pygame.transform.scale(pawn, (64, 64))
+    pawn = pygame.image.load('1_image/image_white_pawn.png')
+    pawn = pygame.transform.scale(pawn, (140, 140))
     white_pawn.append(pawn)
 for i in range(24):
-    pawn = pygame.image.load('image_black_pawn1.png')
-    pawn = pygame.transform.scale(pawn, (64, 64))
+    pawn = pygame.image.load('1_image/image_black_pawn.png')
+    pawn = pygame.transform.scale(pawn, (140, 140))
     black_pawn.append(pawn)
 white_pawn_placement = [[5,3],[4,4],[5,4],[6,4],[3,5],[4,5],[6,5],[7,5],[4,6],[5,6],[6,6],[5,7]]
 black_pawn_placement = [[3,0],[4,0],[5,0],[6,0],[7,0],[5,1],[0,3],[0,4],[0,5],[0,6],[0,7],[1,5],[3,10],[4,10],[5,10],[6,10],[7,10],[5,9],[10,3],[10,4],[10,5],[10,6],[10,7],[9,5]]
@@ -103,28 +103,28 @@ def display_background(color1,color2,color3,curser_color,select_color):
                         case = board[line][column]
                         case.surf.fill(color2)
                         screen.blit(case.surf, (x, y))
-            x += 64
+            x += 140
             test = not test
-        y += 64
+        y += 140
 
 def display_text(tour,white_pawn,black_pawn,winner,finish):
     global font
     global finish_font
-    screen.blit(right_part.surf, (704, 0))
+    screen.blit(right_part.surf, (1540, 0))
     if tour:
         text_tour = font.render('Turn: White',True,(0,0,0))
     else:
         text_tour = font.render('Turn: Black',True,(0,0,0))
-    screen.blit(text_tour,(730, 30))
+    screen.blit(text_tour,(1580, 50))
     text_loose_pawn = font.render('White losses: ' + str(12 - len(white_pawn)),True,(0,0,0))
-    screen.blit(text_loose_pawn,(730, 60))
+    screen.blit(text_loose_pawn,(1580, 100))
     text_loose_pawn = font.render('black losses: ' + str(24 - len(black_pawn)),True,(0,0,0))
-    screen.blit(text_loose_pawn,(730, 90))
+    screen.blit(text_loose_pawn,(1580, 150))
     if finish:
         text_winner = finish_font.render(str(winner) + " won",True,(0,0,0))
-        screen.blit(text_winner,(750, 250))
+        screen.blit(text_winner,(1600, 400))
         text_new_game = font.render('Press escape to restart.',True,(0,0,0))
-        screen.blit(text_new_game,(715, 280))
+        screen.blit(text_new_game,(1550, 450))
 
 def test_special_case(line,column):
     if line == 0 and (column == 0 or column == 10):
@@ -140,7 +140,7 @@ def curser_case(curser_place_x,curser_place_y,curser_color):
     global board
     global place_curser_case
     board[place_curser_case[1]][place_curser_case[0]].surf.fill(place_curser_case[2])
-    screen.blit(board[place_curser_case[1]][place_curser_case[0]].surf, (64 * place_curser_case[0],64 * place_curser_case[1]))
+    screen.blit(board[place_curser_case[1]][place_curser_case[0]].surf, (140 * place_curser_case[0],140 * place_curser_case[1]))
     final_place_x = curser_place_x
     final_place_y = curser_place_y
     if curser_place_x > 10:
@@ -153,7 +153,7 @@ def curser_case(curser_place_x,curser_place_y,curser_color):
         final_place_y = 0
     normal_color = board[final_place_y][final_place_x].surf.get_at((0,0))
     board[final_place_y][final_place_x].surf.fill(curser_color)
-    screen.blit(board[final_place_y][final_place_x].surf, (64 * final_place_x,64 * final_place_y))
+    screen.blit(board[final_place_y][final_place_x].surf, (140 * final_place_x,140 * final_place_y))
     place_curser_case = [final_place_x,final_place_y,normal_color]
 
 def select_case(curser_place_x,curser_place_y,select_color,white_pawn_placement,black_pawn_placement):
@@ -170,14 +170,14 @@ def select_case(curser_place_x,curser_place_y,select_color,white_pawn_placement,
                 king[1] = curser_place_x
                 king[2] = curser_place_y
                 board[place_select_case[1]][place_select_case[0]].surf.fill(place_select_case[2])
-                screen.blit(board[place_select_case[1]][place_select_case[0]].surf, (64 * place_select_case[0],64 * place_select_case[1]))
+                screen.blit(board[place_select_case[1]][place_select_case[0]].surf, (140 * place_select_case[0],140 * place_select_case[1]))
                 place_select_case = [-1,0,color1]
                 king_selected = None
                 enter_on = not enter_on
                 tour = not tour
         if control_deplacement(curser_place_x,curser_place_y,king):
             board[place_select_case[1]][place_select_case[0]].surf.fill(place_select_case[2])
-            screen.blit(board[place_select_case[1]][place_select_case[0]].surf, (64 * place_select_case[0],64 * place_select_case[1]))
+            screen.blit(board[place_select_case[1]][place_select_case[0]].surf, (140 * place_select_case[0],140 * place_select_case[1]))
             place_select_case = [-1,0,color1]
             enter_on = not enter_on
             tour = not tour
@@ -199,16 +199,16 @@ def select_case(curser_place_x,curser_place_y,select_color,white_pawn_placement,
         if test == 1:
             normal_color = board[curser_place_y][curser_place_x].surf.get_at((0,0))
             board[curser_place_y][curser_place_x].surf.fill(select_color)
-            screen.blit(board[curser_place_y][curser_place_x].surf, (64 * curser_place_x, 64 * curser_place_y))
+            screen.blit(board[curser_place_y][curser_place_x].surf, (140 * curser_place_x, 140 * curser_place_y))
             place_select_case = [curser_place_x,curser_place_y,normal_color] 
             enter_on = not enter_on
         
 def display_pawns(white_pawn_placement,white_pawn,black_pawn_placement,black_pawn):
     for i in range(len(white_pawn)):
-        screen.blit(white_pawn[i],(64 * white_pawn_placement[i][0],64 * white_pawn_placement[i][1]))        
+        screen.blit(white_pawn[i],(140 * white_pawn_placement[i][0],140 * white_pawn_placement[i][1]))        
     for i in range(len(black_pawn)):
-        screen.blit(black_pawn[i],(64 * black_pawn_placement[i][0],64 * black_pawn_placement[i][1]))
-    screen.blit(king[0],(64 * king[1],64 * king[2]))
+        screen.blit(black_pawn[i],(140 * black_pawn_placement[i][0],140 * black_pawn_placement[i][1]))
+    screen.blit(king[0],(140 * king[1],140 * king[2]))
 
 def control_deplacement(curser_place_x,curser_place_y,king):
     global pawn_selected
@@ -552,7 +552,7 @@ while running:
         if pressed[pygame.K_ESCAPE]:
             launch = True
     if finish and launch:
-        subprocess.call(["python","1.py"],shell=True)
+        subprocess.call(["python3.7","1.py"])
         exit()
     if control_white_win(king):
         finish = True

@@ -10,7 +10,7 @@ class Dimension():
         self.dim_case = [int(trunc(self.dimension[1] / 10)),int(trunc(self.dimension[1] / 10))]
         self.dim_right_part = [int(trunc( 2 / 9 * self.dimension[0])),self.dimension[1]]
         self.dim_normal_text = int(trunc(1 / 36 * self.dimension[0]))
-        self.dim_finish_text = int(trunc(17 / 180 * self.dimension[0]))
+        self.dim_finish_text = int(trunc(7 / 180 * self.dimension[0]))
         self.dim_marge = self.dim_normal_text
 
 dimension = Dimension(1800)
@@ -62,10 +62,14 @@ class Tour():
         #when turn end
         if self.pawn_to_move == 0:
             self.tour = not self.tour
+            file = open('support_2/money.txt','w')
             if not self.tour:
                 player_1.money += calculate_income(0)
+                file.write(str(player_2.money)) 
             else:
+                file.write(str(player_1.money))
                 player_2.money += calculate_income(1)
+            file.close()
             subprocess.call(['python3','support_2/buy_point.py'])
             self.pawn_to_move = 2
             self.move_remaining = 2
@@ -95,8 +99,6 @@ color2 = (153,196,210)
 select_color = (93,136,150)
 
 #text 
-print(str(dimension.dim_normal_text)+ " normal")
-print(str(dimension.dim_finish_text)+ " finish")
 font = pygame.font.SysFont("Calibri", dimension.dim_normal_text)
 finish_font = pygame.font.SysFont("Calibri",dimension.dim_finish_text)
 
@@ -310,28 +312,31 @@ def control_income_case(pawns,board):
                 if not surrounded:
                     board[line][column].income = False
                     board[line][column].surf.fill(board[line][column].color)
-                    #change Pawn.state for the surrender pawns
-                    for a in range(2):
-                        for i in range(len(pawns[a])):
-                            if pawns[a][i].state[0] == 'incoming':
-                                e = 1
-                                test = False
-                                while not test:
-                                    if pawns[a][i].state[e] == [line,column]:
-                                        pawns[a][i].state.pop(e)
-                                        #control 'incoming'
-                                        if len(pawns[a][i].state) == 1:
-                                            if pawns[a][i].moved[0]:
-                                                board[pawns[a][i].moved[2]][pawns[a][i].moved[1]].surf.fill(board[pawns[a][i].moved[2]][pawns[a][i].moved[1]].color)
-                                            else:
-                                                board[pawns[a][i].co_y][pawns[a][i].co_x].surf.fill(board[pawns[a][i].co_y][pawns[a][i].co_x].color)
-                                            pawns[a][i].state[0] = 'normal'
-                                        test = True
-                                        e -= 1
-                                    e += 1
-                                    if e == len(pawns[a][i].state):
-                                        test = True
+                    change_pawns_incomming(pawns, board)
                                     
+def change_pawns_incomming(pawns,board):
+    #change Pawn.state for the surrender pawns
+    for a in range(2):
+        for i in range(len(pawns[a])):
+            if pawns[a][i].state[0] == 'incoming':
+                e = 1
+                test = False
+                while not test:
+                    if pawns[a][i].state[e] == [line,column]:
+                        pawns[a][i].state.pop(e)
+                        #control 'incoming'
+                        if len(pawns[a][i].state) == 1:
+                            if pawns[a][i].moved[0]:
+                                board[pawns[a][i].moved[2]][pawns[a][i].moved[1]].surf.fill(board[pawns[a][i].moved[2]][pawns[a][i].moved[1]].color)
+                            else:
+                                board[pawns[a][i].co_y][pawns[a][i].co_x].surf.fill(board[pawns[a][i].co_y][pawns[a][i].co_x].color)
+                            pawns[a][i].state[0] = 'normal'
+                        test = True
+                        e -= 1
+                    e += 1
+                    if e == len(pawns[a][i].state):
+                        test = True
+
 def calculate_income(number_player):
     earned_money = 0
     for line in range(10):

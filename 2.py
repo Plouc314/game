@@ -1,6 +1,7 @@
 import pygame
 import subprocess
 from math import trunc
+from time import process_time
 
 pygame.init()
 
@@ -27,6 +28,7 @@ class Case(pygame.sprite.Sprite):
         self.index = index
         self.income = False
         self.income_color = 0
+        self.free = False
 
 class Right_part(pygame.sprite.Sprite):
     def __init__(self,color):
@@ -49,6 +51,9 @@ class Pawn():
         self.index = index
         self.state = ['normal']
         self.moved = [False,0,0]
+        self.attack = False
+        self.target = False
+        self.controled = False
 
 class Tour():
     def __init__(self,tour=True,pawn_to_move=2,move_remaining=2,pawn_index=0):
@@ -57,20 +62,18 @@ class Tour():
         self.move_remaining = move_remaining
         self.pawn_index = pawn_index
         self.new_pawn_select = True
+        self.adding_pawn = False
+        self.attack_mode = False
+        self.attack_index = [0,0]
     
     def control_tour_count(self):
         #when turn end
         if self.pawn_to_move == 0:
             self.tour = not self.tour
-            file = open('support_2/money.txt','w')
             if not self.tour:
-                player_1.money += calculate_income(0)
-                file.write(str(player_2.money)) 
+                player_1.money += calculate_income(0) 
             else:
-                file.write(str(player_1.money))
                 player_2.money += calculate_income(1)
-            file.close()
-            subprocess.call(['python3','support_2/buy_point.py'])
             self.pawn_to_move = 2
             self.move_remaining = 2
             self.new_pawn_select = True
@@ -189,6 +192,16 @@ def display_pawns(pawns):
     for i in range(len(pawns[1])):
         screen.blit(pawns[1][i].image ,(dimension.dim_case[0] * pawns[1][i].co_x ,dimension.dim_case[0] * pawns[1][i].co_y))
 
+def display_store(color1):
+    store_white_pawn = Pawn('white',0,0,0)
+    store_black_pawn = Pawn('black',0,0,0)
+    case_store_1 = Case(color1)
+    case_store_2 = Case(color1)
+    screen.blit(case_store_1.surf,(dimension.dimension[0] - 7 / 8 * dimension.dim_right_part[0],int(trunc( 3 / 9 * dimension.dimension[1]))))
+    screen.blit(store_black_pawn.image,(dimension.dimension[0] - 7 / 8 * dimension.dim_right_part[0],int(trunc( 3 / 9 * dimension.dimension[1]))))
+    screen.blit(case_store_2.surf,(dimension.dimension[0] - 4 / 8 * dimension.dim_right_part[0],int(trunc( 3 / 9 * dimension.dimension[1]))))
+    screen.blit(store_white_pawn.image,(dimension.dimension[0] - 4 / 8 * dimension.dim_right_part[0],int(trunc( 3 / 9 * dimension.dimension[1]))))
+
 def mouse_case(mouse_pos):
     x = 0
     y = 0
@@ -225,7 +238,13 @@ def select_case(mouse_pos,pawns):
                     selected_case.index = [1,i]
                     tour.pawn_index = i
                     selection = True
-    
+
+def deselect_case():
+    global selection
+    selection = False
+    tour.new_pawn_select = True
+    selected_case.co = [-1,-1]
+
 def move_pawn(mouse_pos):
     global selection
     global tour
@@ -312,9 +331,9 @@ def control_income_case(pawns,board):
                 if not surrounded:
                     board[line][column].income = False
                     board[line][column].surf.fill(board[line][column].color)
-                    change_pawns_incomming(pawns, board)
+                    change_pawns_incomming(pawns, board,line,column)
                                     
-def change_pawns_incomming(pawns,board):
+def change_pawns_incomming(pawns,board,line,column):
     #change Pawn.state for the surrender pawns
     for a in range(2):
         for i in range(len(pawns[a])):
@@ -346,35 +365,251 @@ def calculate_income(number_player):
     return earned_money
 
 def display_text():
-    if tour:
+    if tour.tour:
         text_tour = font.render('Turn: White',True,(0,0,0))
     else:
-        text_tour = font.render('Turn: White',True,(0,0,0))
+        text_tour = font.render('Turn: Black',True,(0,0,0))
     dim_x = dimension.dimension[0] - dimension.dim_right_part[0] + dimension.dim_marge
     screen.blit(text_tour,(dim_x, dimension.dim_marge))
     text_money = font.render('Player 1 money: ' + str(player_1.money),True,(0,0,0))
     screen.blit(text_money,(dim_x, 2 * dimension.dim_marge))
     text_money = font.render('Player 2 money: ' + str(player_2.money),True,(0,0,0))
     screen.blit(text_money,(dim_x, 3 * dimension.dim_marge))
+    text_pawn = font.render('Player 1 pawns: ' + str(player_1.pawns_alive),True,(0,0,0))
+    screen.blit(text_pawn,(dim_x, 4 * dimension.dim_marge))
+    text_pawn = font.render('Player 2 pawns: ' + str(player_2.pawns_alive),True,(0,0,0))
+    screen.blit(text_pawn,(dim_x, 5 * dimension.dim_marge))
 
+def control_store(mouse_pos):
+    if not tour.tour:
+        if mouse_pos[0] > dimension.dimension[0] - 7 / 8 * dimension.dim_right_part[0] and mouse_pos[0] < dimension.dimension[0] - 7 / 8 * dimension.dim_right_part[0] + dimension.dim_case[0]:
+            if mouse_pos[1] > int(trunc( 3 / 9 * dimension.dimension[1])) and mouse_pos[1] < int(trunc( 3 / 9 * dimension.dimension[1])) + dimension.dim_case[1]:
+                if player_2.money >= 2:
+                    return 2
+    if tour.tour:
+        if mouse_pos[0] > dimension.dimension[0] - 4 / 8 * dimension.dim_right_part[0] and mouse_pos[0] < dimension.dimension[0] - 4 / 8 * dimension.dim_right_part[0] + dimension.dim_case[0]:
+            if mouse_pos[1] > int(trunc( 3 / 9 * dimension.dimension[1])) and mouse_pos[1] < int(trunc( 3 / 9 * dimension.dimension[1])) + dimension.dim_case[1]:
+                if player_1.money >= 2:
+                    return 1
+    return 0
+
+def add_pawns(board,color,color1,color2):
+    global pawns
+    if color == 1:
+        for line in range(3):
+            for column in range(10):
+                board[line][column].free = False
+                test = False
+                for i in range(len(pawns[0])):
+                    if pawns[0][i].co_x == column and pawns[0][i].co_y == line:
+                        test = True
+                if not test:
+                    board[line][column].free = True
+                    if board[line][column].color == color1:
+                        board[line][column].surf.fill((50,210,50))
+                    else:
+                        board[line][column].surf.fill((30,190,30))
+    
+    if color == 2:
+        for line in range(3):
+            for column in range(10):
+                board[line + 7][column].free = False
+                test = False
+                for i in range(len(pawns[1])):
+                    if pawns[1][i].co_x == column and pawns[1][i].co_y == line + 7:
+                        test = True
+                if not test:
+                    board[line + 7][column].free = True
+                    if board[line + 7][column].color == color1:
+                        board[line + 7][column].surf.fill((50,210,50))
+                    else:
+                        board[line + 7][column].surf.fill((30,190,30))
+    tour.adding_pawn = True
+
+def control_add_case(board,mouse_pos,return_store):
+    global pawns
+    case_select = mouse_case(mouse_pos)
+    if return_store == 1:
+        if case_select[1] <= 2 and board[case_select[1]][case_select[0]].free and tour.adding_pawn:
+            tour.adding_pawn = False
+            player_1.pawns_alive += 1
+            index = len(pawns[0])
+            pawns[0].append(Pawn('white',case_select[0],case_select[1],index))
+            player_1.money -= 2
+    else:
+        if case_select[1] >= 7 and board[case_select[1]][case_select[0]].free and tour.adding_pawn:
+            tour.adding_pawn = False
+            player_2.pawns_alive += 1
+            index = len(pawns[1])
+            pawns[1].append(Pawn('black',case_select[0],case_select[1],index))
+            print(index)
+            player_2.money -= 2
+
+def control_free_case(board):
+    for line in range(10):
+        for column in range(10):
+            if board[line][column].free and not board[line][column].income:
+                board[line][column].surf.fill(board[line][column].color)
+
+def reset_board_color(board,pawns):
+    for line in range(10):
+        for column in range(10):
+            test = True
+            for a in range(2):
+                for i in range(len(pawns[a])):
+                    if pawns[a][i].co_x == column and pawns[a][i].co_y == line:
+                        if len(pawns[a][i].state) != 1:
+                            test = False
+            if not board[line][column].income and test:
+                board[line][column].surf.fill(board[line][column].color)
+
+def search_target_pawn(board,pawns,selected_case):
+    if tour.tour:
+        player = 1
+        player2 = 0
+    else:
+        player = 0
+        player2 = 1
+    ### search attack pawn
+    for i in range(len(pawns[player2])):
+        if pawns[player2][i].co_x == selected_case.co[0] and pawns[player2][i].co_y == selected_case.co[1]:
+            tour.attack_index = [player2,pawns[player2][i].index]
+    ### search target(s)
+    for i in range(len(pawns[player])):
+        test = False
+        if pawns[player][i].co_x == selected_case.co[0] + 1 and pawns[player][i].co_y == selected_case.co[1]:
+            test = True
+        elif pawns[player][i].co_x == selected_case.co[0] - 1 and pawns[player][i].co_y == selected_case.co[1]:
+            test = True
+        elif pawns[player][i].co_x == selected_case.co[0] and pawns[player][i].co_y == selected_case.co[1] + 1:
+            test = True
+        elif pawns[player][i].co_x == selected_case.co[0] and pawns[player][i].co_y == selected_case.co[1] -1:
+            test = True
+        if test:
+            pawns[player][i].target = True
+            board[pawns[player][i].co_y][pawns[player][i].co_x].surf.fill((240,60,60))
+
+def select_target(pawns,mouse_pos):
+    global selected_case
+    coordonate = mouse_case(mouse_pos)
+    selected_case.co = coordonate
+    if tour.tour:
+        player = 1
+    else:
+        player = 0
+    for i in range(len(pawns[player])):
+        if pawns[player][i].co_x == coordonate[0] and pawns[player][i].co_y == coordonate[1]:
+            if pawns[player][i].target:
+                pawns[tour.attack_index[0]][tour.attack_index[1]].moved = [True,pawns[tour.attack_index[0]][tour.attack_index[1]].co_x,pawns[tour.attack_index[0]][tour.attack_index[1]].co_y]
+                pawns[tour.attack_index[0]][tour.attack_index[1]].co_x = coordonate[0]
+                pawns[tour.attack_index[0]][tour.attack_index[1]].co_y = coordonate[1] 
+                pawns[player][i].target = 'confirmed'
+                attack_number = search_support(pawns,tour.attack_index)
+                defence_number = search_support(pawns,[player,i])
+                if attack_number - defence_number <= 0:
+                    attack_failed(pawns,tour.attack_index,selected_case)
+
+def attack_failed(pawns,index,selected_case):
+    global selection
+    select_case.co = [-1,-1]
+    selection = False
+    pawns[index[0]].pop(index[1])
+    for i in range(len(pawns[index[0]]) - index[1] - 1):
+        pawns[index[0]][i + index[1]].index -= 1
+    tour.attack_mode = False
+    for a in range(2):
+        for i in range(len(pawns[a])):
+            pawns[a][i].target = False
+            pawns[a][i].controled = False
+            pawns[a][i].attack = False
+            pawns[a][i].moved = [False,-1,-1]
+    reset_board_color(board,pawns)
+    print("s")
+
+def search_support(pawns,pawn_index):       
+    pawn_chain = [pawns[pawn_index[0]][pawn_index[1]]]
+    pawn_controled = 0
+    new_pawn = []
+    i = 0
+    while pawn_controled != len(pawn_chain):
+        if pawn_chain[i].color == 'white':
+            new_pawn = control_proximity(pawns,pawn_chain[i],0)
+        else:
+            new_pawn = control_proximity(pawns,pawn_chain[i],1)
+        pawn_chain[i].controled = True
+        for a in range(len(new_pawn)):
+            pawn_chain.append(new_pawn[a])
+        pawn_controled += 1
+        i += 1
+    print(len(pawn_chain))
+    return len(pawn_chain)
+    
+
+
+def control_proximity(pawns,pawn_to_control,player):
+    returned = []
+    for i in range(len(pawns[player])):
+        if not pawns[player][i].controled:
+            test = False
+            if pawn_to_control.co_x == pawns[player][i].co_x + 1 and pawn_to_control.co_y == pawns[player][i].co_y:
+                test = True
+            elif pawn_to_control.co_x == pawns[player][i].co_x - 1 and pawn_to_control.co_y == pawns[player][i].co_y:
+                test = True
+            elif pawn_to_control.co_x == pawns[player][i].co_x and pawn_to_control.co_y == pawns[player][i].co_y + 1:
+                test = True
+            elif pawn_to_control.co_x == pawns[player][i].co_x and pawn_to_control.co_y == pawns[player][i].co_y - 1:
+                test = True
+            elif pawn_to_control.co_x == pawns[player][i].co_x + 1 and pawn_to_control.co_y == pawns[player][i].co_y + 1:
+                test = True
+            elif pawn_to_control.co_x == pawns[player][i].co_x - 1 and pawn_to_control.co_y == pawns[player][i].co_y - 1:
+                test = True
+            elif pawn_to_control.co_x == pawns[player][i].co_x - 1 and pawn_to_control.co_y == pawns[player][i].co_y + 1:
+                test = True
+            elif pawn_to_control.co_x == pawns[player][i].co_x + 1 and pawn_to_control.co_y == pawns[player][i].co_y - 1:
+                test = True
+            if test:
+                returned.append(pawns[player][i])
+    return returned
 
 
 clock = pygame.time.Clock()
 
 while running:
+    pressed = pygame.key.get_pressed() 
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
         if event.type == pygame.MOUSEBUTTONUP:
             mouse_pos = pygame.mouse.get_pos()
+            if not tour.adding_pawn and not tour.attack_mode:
+                return_store = control_store(mouse_pos)
+                if return_store == 1:
+                    add_pawns(board, 1,color1,color2)
+                elif return_store == 2:
+                    add_pawns(board, 2,color1,color2)
             if not selection:
                 select_case(mouse_pos,pawns)
-            else:
+            elif selection and not tour.attack_mode:
                 move_pawn(mouse_pos)
+            elif selection and tour.attack_mode:
+                select_target(pawns,mouse_pos)
+    if pressed[pygame.K_BACKSPACE]:
+        deselect_case()
+        tour.attack_mode = False
+        tour.adding_pawn = False
+        reset_board_color(board,pawns)
+    if pressed[pygame.K_a] and selection:
+        tour.attack_mode = True
+        search_target_pawn(board,pawns,selected_case)
     display_background(board)
     display_pawns(pawns)
     display_text()
-    control_income_case(pawns,board)
-    tour.control_tour_count()
+    if not tour.adding_pawn and not tour.attack_mode:
+        display_store(color1)
+        control_income_case(pawns,board)
+        tour.control_tour_count()
+        control_free_case(board)
+    else:
+        control_add_case(board,mouse_pos,return_store)
     clock.tick(60)
     pygame.display.flip()

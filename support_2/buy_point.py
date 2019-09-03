@@ -1,5 +1,6 @@
 import pygame
 from math import trunc
+from math import ceil
 
 pygame.init()
 
@@ -32,45 +33,46 @@ class Button(pygame.sprite.Sprite):
 font = pygame.font.SysFont("Calibri", dimension.dim_normal_text)
 
 background = Background((255,255,255))
-button_yes = Button((170,210,230))
-button_no = Button((170,210,230))
+#button_yes = Button((170,210,230))
+#button_no = Button((170,210,230))
 running = True
-button_pushed = False
 
 #money
 file = open('support_2/money.txt')
-money = int(file.read())
+content = file.read().split(" ")
+content[1] = int(content[1])
 file.close()
 
 def display_background():
     screen.blit(background.surf,(0,0))
-    text_ask = font.render('Want you to add one/several pawn(s)?',True,(0,0,0))
-    screen.blit(text_ask,(int(trunc(1 / 16 * dimension.dimension[0])),int(trunc(1 / 16 * dimension.dimension[0]))))
-    screen.blit(button_yes.surf, (int(trunc(1 / 16 * dimension.dimension[0])), int(trunc(4 / 16 * dimension.dimension[0]))))
-    text_yes = font.render('Yes',True,(0,0,0))
-    screen.blit(text_yes,(int(trunc(9 / 100 * dimension.dimension[0])),int(trunc(107 / 400 * dimension.dimension[0]))))
-    screen.blit(button_no.surf, (int(trunc(11 / 16 * dimension.dimension[0])), int(trunc(4 / 16 * dimension.dimension[0]))))
-    text_yes = font.render('No',True,(0,0,0))
-    screen.blit(text_yes,(int(trunc(73 / 100 * dimension.dimension[0])),int(trunc(107 / 400 * dimension.dimension[0]))))
-
-def display_add_pawns(money):
     text_how_many = font.render('How many pawns do you want to add?',True,(0,0,0))
-    if money > 9:
+    if content[1] > 19:
         max_add = 9
     else:
-        max_add = money
+        max_add = int(ceil(content[1] / 2 - 0.5))
     text_under = font.render('Press a number (max ' + str(max_add) + "):",True,(0,0,0))
-    screen.blit(text_how_many,(int(trunc(1 / 16 * dimension.dimension[0])),int(trunc(7 / 16 * dimension.dimension[0]))))
-    screen.blit(text_under,(int(trunc(1 / 16 * dimension.dimension[0])),int(trunc(8 / 16 * dimension.dimension[0]))))
+    screen.blit(text_how_many,(int(trunc(1 / 16 * dimension.dimension[0])),int(trunc(1 / 16 * dimension.dimension[0]))))
+    screen.blit(text_under,(int(trunc(1 / 16 * dimension.dimension[0])),int(trunc(2 / 16 * dimension.dimension[0]))))
 
-def control_mouse(mouse_pos):
-    if mouse_pos[0] > int(trunc(1 / 16 * dimension.dimension[0])) and mouse_pos[0] < (int(trunc(1 / 16 * dimension.dimension[0])) + dimension.dim_button[0]):
-        if mouse_pos[1] > int(trunc(4 / 16 * dimension.dimension[0])) and mouse_pos[1] < (int(trunc(4 / 16 * dimension.dimension[0])) + dimension.dim_button[1]):
-            return 'Yes'
-    if mouse_pos[0] > int(trunc(11 / 16 * dimension.dimension[0])) and mouse_pos[0] < (int(trunc(11 / 16 * dimension.dimension[0])) + dimension.dim_button[0]):
-        if mouse_pos[1] > int(trunc(4 / 16 * dimension.dimension[0])) and mouse_pos[1] < (int(trunc(4 / 16 * dimension.dimension[0])) + dimension.dim_button[1]):
-            return 'No'
-    return False
+    #text_ask = font.render('Want you to add one/several pawn(s)?',True,(0,0,0))
+    #screen.blit(text_ask,(int(trunc(1 / 16 * dimension.dimension[0])),int(trunc(1 / 16 * dimension.dimension[0]))))
+    #screen.blit(button_yes.surf, (int(trunc(1 / 16 * dimension.dimension[0])), int(trunc(4 / 16 * dimension.dimension[0]))))
+    #text_yes = font.render('Yes',True,(0,0,0))
+    #screen.blit(text_yes,(int(trunc(9 / 100 * dimension.dimension[0])),int(trunc(107 / 400 * dimension.dimension[0]))))
+    #screen.blit(button_no.surf, (int(trunc(11 / 16 * dimension.dimension[0])), int(trunc(4 / 16 * dimension.dimension[0]))))
+    #text_yes = font.render('No',True,(0,0,0))
+    #screen.blit(text_yes,(int(trunc(73 / 100 * dimension.dimension[0])),int(trunc(107 / 400 * dimension.dimension[0]))))
+
+#def display_add_pawns(content):
+    
+#def control_mouse(mouse_pos):
+#    if mouse_pos[0] > int(trunc(1 / 16 * dimension.dimension[0])) and mouse_pos[0] < (int(trunc(1 / 16 * dimension.dimension[0])) + dimension.dim_button[0]):
+#        if mouse_pos[1] > int(trunc(4 / 16 * dimension.dimension[0])) and mouse_pos[1] < (int(trunc(4 / 16 * dimension.dimension[0])) + dimension.dim_button[1]):
+#            return 'Yes'
+#    if mouse_pos[0] > int(trunc(11 / 16 * dimension.dimension[0])) and mouse_pos[0] < (int(trunc(11 / 16 * dimension.dimension[0])) + dimension.dim_button[0]):
+#        if mouse_pos[1] > int(trunc(4 / 16 * dimension.dimension[0])) and mouse_pos[1] < (int(trunc(4 / 16 * dimension.dimension[0])) + dimension.dim_button[1]):
+#            return 'No'
+#    return False
 
 def control_number(pressed,max):
     number = False
@@ -108,22 +110,11 @@ while running:
             file.write('None')
             file.close()
             running = False
-        if event.type == pygame.MOUSEBUTTONUP and not button_pushed:
-            mouse_pos = pygame.mouse.get_pos()
-            if control_mouse(mouse_pos) == 'Yes':
-                button_pushed = not button_pushed
-            elif control_mouse(mouse_pos) == 'No':
-                file = open('support_2/inter.txt','w')
-                file.write('None')
-                file.close()
-                running = False
     display_background()
-    if button_pushed:
-        display_add_pawns(money)
-        returned = control_number(pressed,money)
-        if returned[0]:
-            file = open('support_2/inter.txt','w')
-            file.write(str(returned[1]))
-            file.close()
-            running = False
+    returned = control_number(pressed,int(ceil(content[1] / 2 - 0.5)))
+    if returned[0]:
+        file = open('support_2/inter.txt','w')
+        file.write(str(content[0]) + " " + str(returned[1]))
+        file.close()
+        running = False
     pygame.display.flip()
